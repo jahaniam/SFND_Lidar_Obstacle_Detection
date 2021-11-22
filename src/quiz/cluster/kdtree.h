@@ -46,8 +46,8 @@ struct KdTree
         insertHelper(&root,0, point, id);
 	}
 
-    void searchHelper(Node* node,const std::vector<float> target, int depth, const float distanceTol, std::vector<int>& ids){
-        if (node == NULL) return;
+    void searchHelper(const Node* const& node,const std::vector<float>& target, int depth, const float distanceTol, std::vector<int>& ids) const{
+        if (node == nullptr) return;
 
         auto distance = [](std::vector<float> point,std::vector<float> target){
             return std::sqrt(std::pow(point[0]-target[0],2)+std::pow(point[1]-target[1],2));
@@ -64,7 +64,7 @@ struct KdTree
     }
 
     // return a list of point ids in the tree that are within distance of target
-	std::vector<int> search(std::vector<float> target, float distanceTol)
+	std::vector<int> search(const std::vector<float>& target, float distanceTol) const
 	{
 		std::vector<int> ids;
         searchHelper(root,target,0,distanceTol,ids);

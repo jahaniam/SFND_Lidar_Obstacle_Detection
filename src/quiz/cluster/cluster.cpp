@@ -75,13 +75,36 @@ void render2DTree(Node* node, pcl::visualization::PCLVisualizer::Ptr& viewer, Bo
 
 }
 
-std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
+void clusterHelper(int index, const std::vector<std::vector<float>>& points, std::vector<int>&cluster, std::vector<bool> &processed, const KdTree* const &tree, float distanceTol) {
+    processed[index] = true;
+    cluster.push_back(index);
+
+    std::vector<int> nearest = tree->search(points[index],distanceTol);
+    for (const int &id:nearest){
+        if (!processed[id]){
+            clusterHelper(id,points,cluster,processed,tree,distanceTol);
+        }
+    }
+}
+
+std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<float>>& points, const KdTree* const &tree, float distanceTol)
 {
 
 	// TODO: Fill out this function to return list of indices for each cluster
 
 	std::vector<std::vector<int>> clusters;
- 
+    std::vector<bool> processed(points.size(),false);
+
+    for (int i =0;i<points.size();++i){
+
+        if (processed[i]) continue;
+        std::vector<int> cluster;
+        clusterHelper(i, points, cluster, processed, tree, distanceTol);
+        clusters.push_back(cluster);
+    }
+
+
+
 	return clusters;
 
 }
@@ -130,15 +153,15 @@ int main ()
   	// Render clusters
   	int clusterId = 0;
 	std::vector<Color> colors = {Color(1,0,0), Color(0,1,0), Color(0,0,1)};
-  	for(std::vector<int> cluster : clusters)
+  	for(const std::vector<int>& cluster : clusters)
   	{
   		pcl::PointCloud<pcl::PointXYZ>::Ptr clusterCloud(new pcl::PointCloud<pcl::PointXYZ>());
   		for(int indice: cluster)
-  			clusterCloud->points.push_back(pcl::PointXYZ(points[indice][0],points[indice][1],0));
+  			clusterCloud->points.emplace_back(points[indice][0],points[indice][1],0);
   		renderPointCloud(viewer, clusterCloud,"cluster"+std::to_string(clusterId),colors[clusterId%3]);
   		++clusterId;
   	}
-  	if(clusters.size()==0)
+  	if(clusters.empty())
   		renderPointCloud(viewer,cloud,"data");
 	
   	while (!viewer->wasStopped ())
